@@ -12,8 +12,8 @@ import Scanner from "./pages/Scanner";
 import Admin from "./pages/Admin";
 
 export default function App() {
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem("clubhub-theme") || "light",
+  const [theme, setTheme] = useState(() =>
+    localStorage.getItem("clubhub-theme") === "dark" ? "dark" : "light",
   );
 
   useEffect(() => {
@@ -23,14 +23,14 @@ export default function App() {
   }, [theme]);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800 transition-colors dark:bg-slate-950 dark:text-slate-100">
+    <div className="app-shell min-h-screen text-slate-800 transition-colors dark:text-slate-100">
       <Navbar
         theme={theme}
         onToggleTheme={() =>
           setTheme((current) => (current === "dark" ? "light" : "dark"))
         }
       />
-      <main className="mx-auto max-w-5xl px-4 py-6">
+      <main className="page-enter mx-auto max-w-6xl px-4 py-6 sm:px-6">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />

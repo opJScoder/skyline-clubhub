@@ -2,7 +2,7 @@ import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 function ThemeIcon({ theme }) {
-  return theme === "dark" ? (
+  return theme === "light" ? (
     <svg
       aria-hidden="true"
       viewBox="0 0 24 24"
@@ -38,15 +38,15 @@ function ThemeIcon({ theme }) {
 export default function Navbar({ theme, onToggleTheme }) {
   const { user, logout } = useAuth();
   const link = ({ isActive }) =>
-    `text-sm transition-colors ${isActive ? "font-semibold text-indigo-700 dark:text-indigo-300" : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"}`;
+    `text-sm transition-colors ${isActive ? "font-semibold text-sky-700 dark:text-sky-300" : "text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white"}`;
   return (
-    <header className="border-b border-slate-200/80 bg-white/90 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/90">
-      <nav className="mx-auto flex max-w-5xl flex-wrap items-center gap-4 px-4 py-3">
+    <header className="sticky top-0 z-20 border-b border-sky-100 bg-white/95 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/95">
+      <nav className="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-4 py-3 sm:px-6">
         <Link
           to="/"
-          className="mr-4 flex items-center gap-2 text-lg font-bold tracking-tight text-indigo-700 dark:text-indigo-300"
+          className="mr-4 flex items-center gap-2 text-lg font-bold tracking-tight text-sky-700 dark:text-sky-300"
         >
-          <span className="grid h-8 w-8 place-items-center rounded-xl bg-indigo-600 text-sm text-white shadow-lg shadow-indigo-600/20">
+          <span className="grid h-8 w-8 place-items-center rounded-xl bg-sky-600 text-sm text-white shadow-lg shadow-sky-600/20 transition-transform duration-300 group-hover:rotate-6">
             S
           </span>{" "}
           Skyline ClubHub
@@ -82,6 +82,7 @@ export default function Navbar({ theme, onToggleTheme }) {
             className="theme-toggle"
             type="button"
             onClick={onToggleTheme}
+            aria-pressed={theme === "dark"}
             aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
             title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
           >
