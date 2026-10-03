@@ -2,7 +2,6 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const Razorpay = require('razorpay');
 const nodemailer = require('nodemailer');
-
 const env = process.env;
 const hasRazorpay = !!(env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET);
 const razorpay = hasRazorpay ? new Razorpay({ key_id: env.RAZORPAY_KEY_ID, key_secret: env.RAZORPAY_KEY_SECRET }) : null;

@@ -27,7 +27,6 @@ function Field({
     <label className="auth-field">
       <span>
         {label}
-        {!required && <em>Optional</em>}
       </span>
       <div className="auth-input-wrap">
         <svg

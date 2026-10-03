@@ -4,7 +4,7 @@ const s = new Schema({
   name: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true },
   passwordHash: { type: String, required: true },
-  phone: String,
+  phone: { type: String, required: true, trim: true },
   studentId: String,
   role: { type: String, enum: ['member', 'volunteer', 'treasurer', 'admin'], default: 'member' },
   membershipStatus: { type: String, enum: ['none', 'active', 'expired'], default: 'none' },
