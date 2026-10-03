@@ -38,6 +38,17 @@ router.put('/events/:id', authenticate, requireRole('admin'), validate(v.eventUp
   try { res.json(await Event.findByIdAndUpdate(req.params.id, req.body, { new: true })); } catch (e) { next(e); }
 });
 
+router.delete('/events/:id', authenticate, requireRole('admin'), async (req, res, next) => {
+  try {
+    const hasOrders = await TicketOrder.exists({ eventId: req.params.id });
+    const hasTickets = await Ticket.exists({ eventId: req.params.id });
+    if (hasOrders || hasTickets) return res.status(409).json({ message: 'Events with ticket orders or tickets cannot be deleted; cancel the event instead' });
+    const event = await Event.findOneAndDelete({ _id: req.params.id, soldCount: 0, reservedCount: 0 });
+    if (!event) return res.status(409).json({ message: 'Event not found or has ticket sales in progress' });
+    res.status(204).end();
+  } catch (e) { next(e); }
+});
+
 // Reserve seats atomically, then create the payment order. Price is computed server-side.
 router.post('/events/:id/tickets/order', authenticate, validate(v.ticketOrder), async (req, res, next) => {
   try {

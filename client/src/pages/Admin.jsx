@@ -3,11 +3,34 @@ import api, { errMsg, inr } from '../api';
 
 const toPaise = r => Math.round(parseFloat(r || 0) * 100);
 
-function Msg({ m }) { return m ? <p className={`text-sm ${m.err ? 'text-red-600' : 'text-green-700'}`}>{m.text}</p> : null; }
+function Msg({ m }) {
+  return m ? <p role={m.err ? 'alert' : 'status'} aria-live="polite" className={`rounded border px-3 py-2 text-sm ${m.err ? 'border-red-200 bg-red-50 text-red-700' : 'border-green-200 bg-green-50 text-green-800'}`}>{m.text}</p> : null;
+}
+
+function ConfirmDialog({ title, message, busy, onCancel, onConfirm }) {
+  if (!title) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4" role="presentation">
+      <section className="w-full max-w-md space-y-4 rounded-lg bg-white p-5 shadow-xl" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+        <div>
+          <h2 id="confirm-title" className="text-lg font-semibold">{title}</h2>
+          <p className="mt-2 text-sm text-slate-600">{message}</p>
+        </div>
+        <div className="flex justify-end gap-2">
+          <button type="button" className="btn-ghost" disabled={busy} onClick={onCancel}>Keep it</button>
+          <button type="button" className="rounded border border-red-200 bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50" disabled={busy} onClick={onConfirm}>
+            {busy ? 'Deleting…' : 'Delete'}
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
 
 function EventsTab() {
   const blank = { title: '', description: '', venue: '', startsAt: '', capacity: 100, memberPrice: '', nonMemberPrice: '' };
   const [f, setF] = useState(blank); const [events, setEvents] = useState([]); const [m, setM] = useState(null);
+  const [notice, setNotice] = useState(null); const [confirmTarget, setConfirmTarget] = useState(null); const [deleting, setDeleting] = useState(false);
   const load = () => api.get('/events').then(r => setEvents(r.data));
   useEffect(() => { load(); }, []);
   const set = k => e => setF({ ...f, [k]: e.target.value });
@@ -19,6 +42,17 @@ function EventsTab() {
     } catch (x) { setM({ err: 1, text: errMsg(x) }); }
   };
   const setStatus = async (id, status) => { await api.put(`/events/${id}`, { status }); load(); };
+  const remove = async () => {
+    if (!confirmTarget) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/events/${confirmTarget.id}`);
+      setConfirmTarget(null); setNotice({ text: 'Event deleted' }); load();
+    } catch (x) {
+      setConfirmTarget(null);
+      setNotice({ err: 1, text: x.response?.status === 404 ? 'The backend has not loaded the delete route. Restart the server and try again.' : errMsg(x) });
+    } finally { setDeleting(false); }
+  };
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <form onSubmit={create} className="card space-y-2">
@@ -36,39 +70,70 @@ function EventsTab() {
       </form>
       <div className="space-y-2">
         <h2 className="font-semibold">All events</h2>
+        <Msg m={notice} />
         {events.map(e => (
           <div key={e._id} className="card flex items-center justify-between gap-2 text-sm">
             <div><p className="font-medium">{e.title}</p><p className="text-xs text-slate-500">{e.status} · {e.soldCount} sold · {inr(e.memberPrice)}/{inr(e.nonMemberPrice)}</p></div>
             <div className="flex gap-1">
               {e.status === 'draft' && <button className="btn" onClick={() => setStatus(e._id, 'published')}>Publish</button>}
               {e.status === 'published' && <button className="btn-ghost" onClick={() => setStatus(e._id, 'cancelled')}>Cancel</button>}
+              <button className="btn-ghost text-red-600" onClick={() => setConfirmTarget({ id: e._id, title: e.title })}>Delete</button>
             </div>
           </div>))}
       </div>
+      <ConfirmDialog title={confirmTarget ? `Delete “${confirmTarget.title}”?` : ''} message="Events with ticket orders or tickets cannot be deleted. Cancel those events instead." busy={deleting} onCancel={() => setConfirmTarget(null)} onConfirm={remove} />
     </div>
   );
 }
 
 function AnnouncementsTab() {
   const [f, setF] = useState({ title: '', body: '', category: 'general', pinned: false }); const [m, setM] = useState(null);
+  const [announcements, setAnnouncements] = useState([]);
+  const [notice, setNotice] = useState(null); const [confirmTarget, setConfirmTarget] = useState(null); const [deleting, setDeleting] = useState(false);
+  const load = () => api.get('/announcements', { params: { limit: 50 } }).then(r => setAnnouncements(r.data.items));
+  useEffect(() => { load(); }, []);
   const send = async e => {
     e.preventDefault();
-    try { await api.post('/announcements', f); setF({ title: '', body: '', category: 'general', pinned: false }); setM({ text: 'Published. Emails are being sent in the background.' }); }
+    try { await api.post('/announcements', f); setF({ title: '', body: '', category: 'general', pinned: false }); setM({ text: 'Published. Emails are being sent in the background.' }); load(); }
     catch (x) { setM({ err: 1, text: errMsg(x) }); }
   };
+  const remove = async () => {
+    if (!confirmTarget) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/announcements/${confirmTarget.id}`);
+      setConfirmTarget(null); setNotice({ text: 'Announcement deleted' }); load();
+    } catch (x) {
+      setConfirmTarget(null);
+      setNotice({ err: 1, text: x.response?.status === 404 ? 'The backend has not loaded the delete route. Restart the server and try again.' : errMsg(x) });
+    } finally { setDeleting(false); }
+  };
   return (
-    <form onSubmit={send} className="card mx-auto max-w-lg space-y-2">
-      <h2 className="font-semibold">New announcement</h2>
-      <input className="input" placeholder="Title" required value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
-      <textarea className="input h-32" placeholder="Message" required value={f.body} onChange={e => setF({ ...f, body: e.target.value })} />
-      <div className="flex items-center gap-3">
-        <select className="input w-auto" value={f.category} onChange={e => setF({ ...f, category: e.target.value })}>
-          {['general', 'meeting', 'deadline', 'change-of-plan'].map(c => <option key={c}>{c}</option>)}
-        </select>
-        <label className="text-sm"><input type="checkbox" checked={f.pinned} onChange={e => setF({ ...f, pinned: e.target.checked })} /> Pin</label>
+    <div className="grid gap-6 md:grid-cols-2">
+      <form onSubmit={send} className="card space-y-2">
+        <h2 className="font-semibold">New announcement</h2>
+        <input className="input" placeholder="Title" required value={f.title} onChange={e => setF({ ...f, title: e.target.value })} />
+        <textarea className="input h-32" placeholder="Message" required value={f.body} onChange={e => setF({ ...f, body: e.target.value })} />
+        <div className="flex items-center gap-3">
+          <select className="input w-auto" value={f.category} onChange={e => setF({ ...f, category: e.target.value })}>
+            {['general', 'meeting', 'deadline', 'change-of-plan'].map(c => <option key={c}>{c}</option>)}
+          </select>
+          <label className="text-sm"><input type="checkbox" checked={f.pinned} onChange={e => setF({ ...f, pinned: e.target.checked })} /> Pin</label>
+        </div>
+        <button className="btn">Publish & email members</button><Msg m={m} />
+      </form>
+      <div className="space-y-2">
+        <h2 className="font-semibold">All announcements</h2>
+        <Msg m={notice} />
+        {announcements.map(a => (
+          <div key={a._id} className="card flex items-center justify-between gap-2 text-sm">
+            <div><p className="font-medium">{a.title}</p><p className="text-xs text-slate-500">{a.category} · {new Date(a.createdAt).toLocaleDateString()}</p></div>
+            <button className="btn-ghost text-red-600" onClick={() => setConfirmTarget({ id: a._id, title: a.title })}>Delete</button>
+          </div>))}
+        {!announcements.length && <p className="text-sm text-slate-500">No announcements yet.</p>}
       </div>
-      <button className="btn">Publish & email members</button><Msg m={m} />
-    </form>
+      <ConfirmDialog title={confirmTarget ? `Delete “${confirmTarget.title}”?` : ''} message="This removes the announcement from the site. Emails already sent to members cannot be recalled." busy={deleting} onCancel={() => setConfirmTarget(null)} onConfirm={remove} />
+    </div>
   );
 }
 

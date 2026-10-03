@@ -31,4 +31,12 @@ router.put('/announcements/:id', authenticate, requireRole('admin'), validate(v.
   try { res.json(await Announcement.findByIdAndUpdate(req.params.id, req.body, { new: true })); } catch (e) { next(e); }
 });
 
+router.delete('/announcements/:id', authenticate, requireRole('admin'), async (req, res, next) => {
+  try {
+    const announcement = await Announcement.findByIdAndDelete(req.params.id);
+    if (!announcement) return res.status(404).json({ message: 'Announcement not found' });
+    res.status(204).end();
+  } catch (e) { next(e); }
+});
+
 module.exports = router;
