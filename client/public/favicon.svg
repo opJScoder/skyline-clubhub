@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Skyline ClubHub</title>
+  <rect width="64" height="64" rx="14" fill="#075a8a"/>
+  <circle cx="46" cy="18" r="7" fill="#f5a623"/>
+  <path fill="#fff" d="M10 50V34h8v16h5V25h8v25h5V31h8v19h5V21h5v29h4v4H10z"/>
+  <path fill="#e4f2fb" d="M10 54h44v3H10z"/>
+</svg>
