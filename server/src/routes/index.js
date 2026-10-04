@@ -1,0 +1,20 @@
+import {Router} from 'express';
+import auth from './auth.routes.js';
+import users from './users.routes.js';
+import membership from './membership.routes.js';
+import events from './events.routes.js';
+import announcements from './announcements.routes.js';
+import shop from './shop.routes.js';
+import fundraisers from './fundraisers.routes.js';
+import finance from './finance.routes.js';
+
+const router=Router();
+router.use(auth);
+router.use(users);
+router.use(membership);
+router.use(events);
+router.use(announcements);
+router.use(shop);
+router.use(fundraisers);
+router.use(finance);
+export default router;
